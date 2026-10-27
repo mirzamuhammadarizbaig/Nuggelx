@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="hero">
+  <div class="intro">
+    <h1>Hungry? Ask the nugget.</h1>
+    <p>Menu, prices, deals, timings, delivery. NuggleBot reads our menu so you don't have to.</p>
+    <svg class="mascot" viewBox="0 0 220 190" role="img" aria-label="Smiling chicken nugget mascot">
+      <path d="M42 78C30 36 82 12 126 22c46 10 72 44 56 90-12 36-48 60-92 54C46 160 24 124 42 78Z" fill="#E39A3B" stroke="#2B1B17" stroke-width="7" stroke-linejoin="round"/>
+      <path d="M62 56c14-14 36-20 54-16" fill="none" stroke="#F6C77A" stroke-width="9" stroke-linecap="round"/>
+      <g class="eyes"><ellipse cx="88" cy="92" rx="9" ry="12" fill="#2B1B17"/><ellipse cx="136" cy="92" rx="9" ry="12" fill="#2B1B17"/>
+      <circle cx="91" cy="87" r="3" fill="#fff"/><circle cx="139" cy="87" r="3" fill="#fff"/></g>
+      <circle cx="70" cy="118" r="9" fill="#E8321E" opacity=".45"/><circle cx="154" cy="118" r="9" fill="#E8321E" opacity=".45"/>
+      <path d="M94 116q18 22 36 0" fill="#fff" stroke="#2B1B17" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+  </div>
+
+  <div class="chat" aria-label="Chat with NuggleBot">
+    <div class="chat-head"><span class="dot"></span> NuggleBot <small>answers from our menu PDF</small></div>
+    <div id="log" aria-live="polite">
+      <div class="msg bot">Hey! I'm NuggleBot. What are you craving today?</div>
+    </div>
+    <div class="chips">
+      <button class="chip" type="button">What's on the menu?</button>
+      <button class="chip" type="button">Any deals?</button>
+      <button class="chip" type="button">When are you open?</button>
+      <button class="chip" type="button">Do you deliver?</button>
+    </div>
+    <div class="row">
+      <input id="inp" placeholder="Ask about nuggets, burgers, prices…" autocomplete="off" aria-label="Your question">
+      <button id="send" class="btn" type="button">Send</button>
+    </div>
+  </div>
+</section>
+
+<script>
+const log = document.getElementById("log"), inp = document.getElementById("inp"), sendBtn = document.getElementById("send");
+let history = [], busy = false;
+
+function fmt(t) {
+  return t.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")
+          .replace(/\*\*(.+?)\*\*/g, "<b>$1</b>").replace(/^[-*] /gm, "• ");
+}
+function add(text, who, html) {
+  const d = document.createElement("div");
+  d.className = "msg " + who;
+  if (html) d.innerHTML = html; else d.textContent = text;
+  log.appendChild(d); log.scrollTop = log.scrollHeight; return d;
+}
+async function send(text) {
+  const q = (text || inp.value).trim();
+  if (!q || busy) return;
+  busy = true; sendBtn.disabled = true; inp.value = "";
+  add(q, "user");
+  const typing = add("", "bot", '<span class="dots"><i></i><i></i><i></i></span>');
+  try {
+    const r = await fetch("/chat", {method: "POST", headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({message: q, history})});
+    const data = await r.json();
+    typing.innerHTML = fmt(data.reply);
+    history.push({role: "user", content: q}, {role: "assistant", content: data.reply});
+  } catch { typing.textContent = "Couldn't reach the server. Check your connection and try again."; }
+  busy = false; sendBtn.disabled = false; log.scrollTop = log.scrollHeight; inp.focus();
+}
+sendBtn.onclick = () => send();
+inp.addEventListener("keydown", e => { if (e.key === "Enter") send(); });
+document.querySelectorAll(".chip").forEach(c => c.onclick = () => send(c.textContent));
+</script>
+{% endblock %}

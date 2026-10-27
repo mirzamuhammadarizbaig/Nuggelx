@@ -1,0 +1,20 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="page">
+  <h1>How NUGGLEX works</h1>
+  <p class="lead">NUGGLEX is a RAG (Retrieval-Augmented Generation) chatbot. It only answers from the restaurant's menu PDF, so it doesn't make stuff up.</p>
+
+  <ol class="steps">
+    <li><b>Read the PDF</b><span>The menu PDF is loaded once when the server starts.</span></li>
+    <li><b>Chunk and index</b><span>The text is split into small pieces and turned into TF-IDF vectors.</span></li>
+    <li><b>Retrieve</b><span>Your question is matched against the chunks and the closest ones are picked.</span></li>
+    <li><b>Answer</b><span>Those chunks plus your question go to an LLM through the Ollama API.</span></li>
+  </ol>
+
+  <div class="card">
+    <p><b>Stack:</b> Flask, Ollama API, scikit-learn, vanilla JS.</p>
+    <p>Built by <b>Ariz Baig</b>.</p>
+    <a class="btn" href="{{ github }}" target="_blank" rel="noopener">Visit my GitHub</a>
+  </div>
+</section>
+{% endblock %}
